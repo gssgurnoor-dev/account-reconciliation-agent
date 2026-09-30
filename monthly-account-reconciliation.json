@@ -39,7 +39,7 @@
         },
         "options": {}
       },
-      "id": "07cde262-d3d2-4898-b98f-2d9956fcaef8",
+      "id": "YOUR_SHEET_ID",
       "name": "Read Ledger",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
@@ -623,7 +623,7 @@
     },
     {
       "parameters": {
-        "sendTo": "gssgurnoor@gmail.com ",
+        "sendTo": "YOUR_EMAIL@example.com ",
         "subject": "=Monthly Reconciliation - {{ $('Compile Reconciliation Data').item.json.matchRate }}% matched",
         "message": "=<h2>Monthly Account Reconciliation</h2><p>Generated: {{ $('Compile Reconciliation Data').item.json.generatedAt }}</p><ul><li>Total ledger entries: {{ $('Compile Reconciliation Data').item.json.totalLedger }}</li><li>Total bank entries: {{ $('Compile Reconciliation Data').item.json.totalBank }}</li><li>Matched exactly: {{ $('Compile Reconciliation Data').item.json.matchedExact }}</li><li>Matched via fuzzy logic: {{ $('Compile Reconciliation Data').item.json.matchedFuzzy }}</li><li>True discrepancies: {{ $('Compile Reconciliation Data').item.json.discrepancyCount }}</li><li>Match rate: {{ $('Compile Reconciliation Data').item.json.matchRate }}%</li></ul><p><a href=\"https://docs.google.com/document/d/{{ $('Create Report Doc').item.json.id }}/edit\">Open the full reconciliation report</a></p>",
         "options": {}
@@ -646,7 +646,7 @@
     },
     {
       "parameters": {
-        "sendTo": "gssgurnoor@gmail.com",
+        "sendTo": "YOUR_EMAIL@example.com",
         "subject": "Reconciliation workflow: a step failed",
         "message": "=<p>A step in the monthly reconciliation workflow failed and the run may be incomplete.</p><p>Execution: {{ $execution.id }}</p><p>Error: {{ $json.error && $json.error.message ? $json.error.message : 'See execution log for details.' }}</p>",
         "options": {}
@@ -662,7 +662,7 @@
       "webhookId": "25210989-d46e-4061-8698-2db14e036497",
       "credentials": {
         "gmailOAuth2": {
-          "id": "qBBS3hG5H4cNGYVt",
+          "id": "YOUR_EMAILaccount_ID",
           "name": "Gmail account 3"
         }
       }
