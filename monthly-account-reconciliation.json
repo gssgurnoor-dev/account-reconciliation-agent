@@ -1,0 +1,1000 @@
+{
+  "name": "Monthly Account Reconciliation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 1 * *"
+            }
+          ]
+        }
+      },
+      "id": "15c9c789-014e-4413-a125-b4fea8e1deea",
+      "name": "Monthly Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1qhCSYp3DcD44VMtPwwR6DTvauJvKaJojti01QGiCfgI",
+          "mode": "list",
+          "cachedResultName": "Ledger test",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qhCSYp3DcD44VMtPwwR6DTvauJvKaJojti01QGiCfgI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1776971918,
+          "mode": "list",
+          "cachedResultName": "Ledger",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qhCSYp3DcD44VMtPwwR6DTvauJvKaJojti01QGiCfgI/edit#gid=1776971918"
+        },
+        "options": {}
+      },
+      "id": "07cde262-d3d2-4898-b98f-2d9956fcaef8",
+      "name": "Read Ledger",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        368
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "392iknYgA12UGOmF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "4ff6a4dc-c40d-4110-aa0d-acb99d5ee0ae",
+      "name": "Manual Test Run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "queryString": "(mimeType = 'text/csv' or mimeType = 'application/pdf') and trashed = false",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1wUVCTlYCEm7lNTE8MiyfPQ-T_GOnl-Qm",
+            "mode": "list",
+            "cachedResultName": "Bank statements",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1wUVCTlYCEm7lNTE8MiyfPQ-T_GOnl-Qm"
+          },
+          "whatToSearch": "files"
+        },
+        "options": {
+          "fields": [
+            "id",
+            "name"
+          ]
+        }
+      },
+      "id": "1a135a3e-9356-427a-b491-7b70e0733187",
+      "name": "Find Latest Bank File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        448,
+        368
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "gGhcXI7Mp81QW61O",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {
+          "binaryPropertyName": "data",
+          "fileName": "={{ $json.name }}"
+        }
+      },
+      "id": "acb92094-9315-4ee3-84dd-9dc260df600f",
+      "name": "Download Bank File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        672,
+        368
+      ],
+      "retryOnFail": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "qf5T1WCcGS9ZYbqf",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Find Latest Bank File').item.json.name.toLowerCase() }}",
+                    "rightValue": ".csv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "csv"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Find Latest Bank File').item.json.name.toLowerCase() }}",
+                    "rightValue": ".pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pdf"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6e741449-5b86-4a02-8ba5-b14795a71e55",
+      "name": "Route CSV vs PDF",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "headerRow": true
+        }
+      },
+      "id": "69b71e50-2a0b-430d-bf74-18d0f416c601",
+      "name": "Parse CSV",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        1792,
+        48
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function toNum(v) {\n  if (typeof v === 'number') return v;\n  if (v === null || v === undefined || v === '') return 0;\n  const s = String(v).replace(/[^0-9.\\-]/g, '');\n  const n = parseFloat(s);\n  return isNaN(n) ? 0 : n;\n}\nfunction toDate(v) {\n  if (v === null || v === undefined || v === '') return '';\n  const d = new Date(v);\n  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);\n  return String(v).trim();\n}\nconst ledger = $('Read Ledger').all().map(i => ({\n  date: toDate(i.json.date),\n  amount: toNum(i.json.amount),\n  description: (i.json.description || '').toString().trim(),\n  reference: (i.json.reference || '').toString().trim(),\n  source: 'ledger',\n}));\nconst bank = $input.all()\n  .map(i => i.json)\n  .filter(r => r && (r.date || r.amount !== undefined && r.amount !== null))\n  .map(r => ({\n    date: toDate(r.date),\n    amount: toNum(r.amount),\n    description: (r.description || '').toString().trim(),\n    reference: '',\n    source: 'bank',\n  }));\nreturn ledger.concat(bank).map(r => ({ json: r }));"
+      },
+      "id": "7e882c6a-649f-447e-841b-968771bcbc70",
+      "name": "Normalize Ledger & Bank",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "id": "4c72086f-b04a-430a-bef5-a2b2c62a1330",
+      "name": "Extract PDF Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        384
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const txt = ($input.first().json.text) || ($input.first().json.data) || '';\nconst promptText = 'Extract all transactions from this bank statement text. Return ONLY a JSON array where each element is {\"date\":\"YYYY-MM-DD\",\"description\":\"...\",\"amount\":<number>,\"balance\":<number>}. Amounts must be numbers (negative for debits). No prose, no markdown.\\n\\nSTATEMENT TEXT:\\n' + txt;\nreturn [{ json: { requestBody: { model: 'claude-3-5-sonnet-20241022', max_tokens: 4096, messages: [{ role: 'user', content: promptText }] } } }];"
+      },
+      "id": "4daba7c3-6ccb-4b27-949f-028fc30d458c",
+      "name": "Build PDF Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestBody }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "b70c6228-8a5e-4f1a-b0f4-af141c3ad9b9",
+      "name": "LLM Parse Bank PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1568,
+        320
+      ],
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "anthropicApi": {
+          "id": "AsCZ03sYretMjCXF",
+          "name": "Anthropic account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet text = '';\nif (items.length && items[0].json && items[0].json.content) {\n  const blocks = items[0].json.content;\n  const b = Array.isArray(blocks) ? blocks.find(x => x.type === 'text') : null;\n  text = b ? b.text : '';\n}\nlet arr = [];\nif (text) {\n  let clean = text.trim();\n  const fence = String.fromCharCode(96, 96, 96);\n  clean = clean.split(fence).join('');\n  if (clean.slice(0, 4).toLowerCase() === 'json') clean = clean.slice(4);\n  clean = clean.trim();\n  try { arr = JSON.parse(clean); } catch (e) { arr = []; }\n}\nif (!Array.isArray(arr)) arr = [];\nif (arr.length === 0) return [{ json: {} }];\nreturn arr.map(t => ({ json: { date: t.date, description: t.description, amount: t.amount, balance: t.balance } }));"
+      },
+      "id": "e6e2ba07-4d76-4c61-9727-9019c5410741",
+      "name": "Parse Bank PDF JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        240
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $input.all().map(i => i.json);\nconst ledger = all.filter(r => r.source === 'ledger');\nconst bank = all.filter(r => r.source === 'bank');\nconst usedBank = {};\nconst matched = [];\nconst unmatchedLedger = [];\nfor (const L of ledger) {\n  let hit = -1;\n  for (let j = 0; j < bank.length; j++) {\n    if (usedBank[j]) continue;\n    if (bank[j].date === L.date && Math.round(bank[j].amount * 100) === Math.round(L.amount * 100)) { hit = j; break; }\n  }\n  if (hit >= 0) { usedBank[hit] = true; matched.push({ ledger: L, bank: bank[hit] }); }\n  else unmatchedLedger.push(L);\n}\nconst unmatchedBank = bank.filter((_, j) => !usedBank[j]);\nreturn [{ json: {\n  totalLedger: ledger.length,\n  totalBank: bank.length,\n  exactMatchedCount: matched.length,\n  matched,\n  unmatchedLedger,\n  unmatchedBank,\n} }];"
+      },
+      "id": "033b7af3-42a5-4336-a363-e5c0047b50aa",
+      "name": "Exact Match",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst promptText = [\n  'You are a bank reconciliation assistant.',\n  'Compare these UNMATCHED ledger and bank transactions and identify likely matches despite: date shifts of 1-3 days, rounding differences under a small tolerance (< 0.05), or differently worded descriptions that refer to the same transaction.',\n  'Ledger entries (JSON): ' + JSON.stringify(d.unmatchedLedger || []),\n  'Bank entries (JSON): ' + JSON.stringify(d.unmatchedBank || []),\n  'Return ONLY a JSON array. Each element must be {\"ledger\": <the ledger object>, \"bank\": <the bank object>, \"confidence\": <number 0-100>, \"reason\": \"<short reason>\"}. If there are no plausible matches, return []. No prose, no markdown.',\n].join('\\n');\nreturn [{ json: {\n  unmatchedLedger: d.unmatchedLedger || [],\n  unmatchedBank: d.unmatchedBank || [],\n  requestBody: { model: 'claude-3-5-sonnet-20241022', max_tokens: 4096, messages: [{ role: 'user', content: promptText }] },\n} }];"
+      },
+      "id": "f606673a-bcca-41b6-85b5-4ecb29b0c9e0",
+      "name": "Build Fuzzy Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestBody }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "5cc5a5e8-feff-4595-81e5-b058444b214b",
+      "name": "LLM Fuzzy Match",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2688,
+        144
+      ],
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "anthropicApi": {
+          "id": "AsCZ03sYretMjCXF",
+          "name": "Anthropic account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet text = '';\nif (items.length && items[0].json && items[0].json.content) {\n  const blocks = items[0].json.content;\n  const b = Array.isArray(blocks) ? blocks.find(x => x.type === 'text') : null;\n  text = b ? b.text : '';\n}\nlet arr = [];\nif (text) {\n  let clean = text.trim();\n  const fence = String.fromCharCode(96, 96, 96);\n  clean = clean.split(fence).join('');\n  if (clean.slice(0, 4).toLowerCase() === 'json') clean = clean.slice(4);\n  clean = clean.trim();\n  try { arr = JSON.parse(clean); } catch (e) { arr = []; }\n}\nif (!Array.isArray(arr)) arr = [];\nif (arr.length === 0) return [{ json: { pairType: 'none' } }];\nreturn arr.map(p => ({ json: {\n  pairType: 'candidate',\n  confidence: Number(p.confidence) || 0,\n  reason: p.reason || '',\n  ledger: p.ledger || {},\n  bank: p.bank || {},\n} }));"
+      },
+      "id": "a5787e77-68a9-490e-a691-b1b1f6305aad",
+      "name": "Parse Fuzzy Matches",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        96
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "conf",
+              "leftValue": "={{ $json.confidence }}",
+              "rightValue": 85,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9be048e5-0b14-41fd-a90b-d4e28c675f26",
+      "name": "Confidence Above 85",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3136,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "st1",
+              "name": "status",
+              "value": "matched_fuzzy",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "23a2f4e2-6082-4a66-8d80-e1d942977096",
+      "name": "Mark Fuzzy Matched",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3360,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d91b2906-b765-4ef5-bb13-89af3740d641",
+      "name": "Combine Classified",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3584,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "st2",
+              "name": "status",
+              "value": "discrepancy",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "7eaf4172-233b-4156-9b30-abe7d20e1b84",
+      "name": "Mark Discrepancy",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3360,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ex = $('Exact Match').first().json;\nconst classified = $input.all().map(i => i.json).filter(r => r.pairType === 'candidate');\nconst fuzzyMatched = classified.filter(r => Number(r.confidence) > 85);\nconst discrepancies = classified.filter(r => !(Number(r.confidence) > 85));\nconst totalMatched = ex.exactMatchedCount + fuzzyMatched.length;\nconst denom = Math.max(ex.totalLedger, 1);\nconst matchRate = Math.round((totalMatched / denom) * 1000) / 10;\nconst discList = discrepancies.map(d => ({\n  ledger: d.ledger || {},\n  bank: d.bank || {},\n  confidence: Number(d.confidence) || 0,\n  reason: d.reason || 'No confident match found',\n}));\nreturn [{ json: {\n  totalLedger: ex.totalLedger,\n  totalBank: ex.totalBank,\n  matchedExact: ex.exactMatchedCount,\n  matchedFuzzy: fuzzyMatched.length,\n  discrepancyCount: discList.length,\n  matchRate: matchRate,\n  discrepancies: discList,\n  generatedAt: $now.toISO(),\n} }];"
+      },
+      "id": "fc830f18-61d4-4fd1-bf57-ff290f4b38e9",
+      "name": "Compile Reconciliation Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3808,
+        96
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "totalLedger",
+              "value": "={{ $json.totalLedger }}",
+              "type": "number"
+            },
+            {
+              "id": "r2",
+              "name": "totalBank",
+              "value": "={{ $json.totalBank }}",
+              "type": "number"
+            },
+            {
+              "id": "r3",
+              "name": "matchedExact",
+              "value": "={{ $json.matchedExact }}",
+              "type": "number"
+            },
+            {
+              "id": "r4",
+              "name": "matchedFuzzy",
+              "value": "={{ $json.matchedFuzzy }}",
+              "type": "number"
+            },
+            {
+              "id": "r5",
+              "name": "discrepancyCount",
+              "value": "={{ $json.discrepancyCount }}",
+              "type": "number"
+            },
+            {
+              "id": "r6",
+              "name": "matchRate",
+              "value": "={{ $json.matchRate }}",
+              "type": "number"
+            },
+            {
+              "id": "r7",
+              "name": "discrepancies",
+              "value": "={{ $json.discrepancies }}",
+              "type": "array"
+            },
+            {
+              "id": "r8",
+              "name": "generatedAt",
+              "value": "={{ $json.generatedAt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "49bdd0fc-9feb-456f-bf98-8acc760c1d0d",
+      "name": "Build Report Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        4032,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst L = [];\nL.push('MONTHLY ACCOUNT RECONCILIATION REPORT');\nL.push('Generated: ' + (r.generatedAt || ''));\nL.push('');\nL.push('SUMMARY');\nL.push('Total ledger entries: ' + r.totalLedger);\nL.push('Total bank entries: ' + r.totalBank);\nL.push('Matched exactly: ' + r.matchedExact);\nL.push('Matched via fuzzy logic: ' + r.matchedFuzzy);\nL.push('True discrepancies: ' + r.discrepancyCount);\nL.push('Match rate: ' + r.matchRate + '%');\nL.push('');\nL.push('DISCREPANCIES');\nconst disc = r.discrepancies || [];\nif (disc.length === 0) {\n  L.push('None - all entries reconciled.');\n} else {\n  L.push('Date | Amount | Description | Source | Reason');\n  L.push('---- | ------ | ----------- | ------ | ------');\n  for (const d of disc) {\n    const hasLedger = d.ledger && d.ledger.date;\n    const e = hasLedger ? d.ledger : (d.bank || {});\n    const src = hasLedger ? 'ledger' : 'bank';\n    L.push([e.date || '', (e.amount !== undefined && e.amount !== null) ? e.amount : '', (e.description || ''), src, (d.reason || '')].join(' | '));\n  }\n}\nconst title = 'Reconciliation Report ' + String(r.generatedAt || '').slice(0, 10);\nreturn [{ json: { docBody: L.join('\\n'), docTitle: title } }];"
+      },
+      "id": "e8fb6486-4760-47ae-a008-074cf33a5b35",
+      "name": "Format Report Document",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "folderId": "1E7MzMyF-Dp39t12YRZ-PymOphWWuXf3t",
+        "title": "={{ $json.docTitle }}"
+      },
+      "id": "614735a2-113b-4f95-9910-53af273d4723",
+      "name": "Create Report Doc",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        4480,
+        96
+      ],
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "DOS0oucj6fCuFP7H",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $('Format Report Document').item.json.docBody }}"
+            }
+          ]
+        }
+      },
+      "id": "6475769b-39f1-419e-b422-b3fd16e3f916",
+      "name": "Write Report Content",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        4704,
+        96
+      ],
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "DOS0oucj6fCuFP7H",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "gssgurnoor@gmail.com ",
+        "subject": "=Monthly Reconciliation - {{ $('Compile Reconciliation Data').item.json.matchRate }}% matched",
+        "message": "=<h2>Monthly Account Reconciliation</h2><p>Generated: {{ $('Compile Reconciliation Data').item.json.generatedAt }}</p><ul><li>Total ledger entries: {{ $('Compile Reconciliation Data').item.json.totalLedger }}</li><li>Total bank entries: {{ $('Compile Reconciliation Data').item.json.totalBank }}</li><li>Matched exactly: {{ $('Compile Reconciliation Data').item.json.matchedExact }}</li><li>Matched via fuzzy logic: {{ $('Compile Reconciliation Data').item.json.matchedFuzzy }}</li><li>True discrepancies: {{ $('Compile Reconciliation Data').item.json.discrepancyCount }}</li><li>Match rate: {{ $('Compile Reconciliation Data').item.json.matchRate }}%</li></ul><p><a href=\"https://docs.google.com/document/d/{{ $('Create Report Doc').item.json.id }}/edit\">Open the full reconciliation report</a></p>",
+        "options": {}
+      },
+      "id": "a1dbf90d-dee9-401f-8f7b-c2ad489cd55b",
+      "name": "Send Summary Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4928,
+        96
+      ],
+      "webhookId": "354c4c75-96a1-4208-984b-ad86477d6888",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qBBS3hG5H4cNGYVt",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "gssgurnoor@gmail.com",
+        "subject": "Reconciliation workflow: a step failed",
+        "message": "=<p>A step in the monthly reconciliation workflow failed and the run may be incomplete.</p><p>Execution: {{ $execution.id }}</p><p>Error: {{ $json.error && $json.error.message ? $json.error.message : 'See execution log for details.' }}</p>",
+        "options": {}
+      },
+      "id": "a373e5df-0ce1-4bbd-9bee-9335c58b374f",
+      "name": "Notify Failure",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2912,
+        464
+      ],
+      "webhookId": "25210989-d46e-4061-8698-2db14e036497",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qBBS3hG5H4cNGYVt",
+          "name": "Gmail account 3"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Monthly Schedule": {
+      "main": [
+        [
+          {
+            "node": "Read Ledger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Ledger": {
+      "main": [
+        [
+          {
+            "node": "Find Latest Bank File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Test Run": {
+      "main": [
+        [
+          {
+            "node": "Read Ledger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Latest Bank File": {
+      "main": [
+        [
+          {
+            "node": "Download Bank File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Bank File": {
+      "main": [
+        [
+          {
+            "node": "Route CSV vs PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route CSV vs PDF": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [
+          {
+            "node": "Normalize Ledger & Bank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Ledger & Bank": {
+      "main": [
+        [
+          {
+            "node": "Exact Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF Text": {
+      "main": [
+        [
+          {
+            "node": "Build PDF Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PDF Prompt": {
+      "main": [
+        [
+          {
+            "node": "LLM Parse Bank PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Parse Bank PDF": {
+      "main": [
+        [
+          {
+            "node": "Parse Bank PDF JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Bank PDF JSON": {
+      "main": [
+        [
+          {
+            "node": "Normalize Ledger & Bank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exact Match": {
+      "main": [
+        [
+          {
+            "node": "Build Fuzzy Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Fuzzy Prompt": {
+      "main": [
+        [
+          {
+            "node": "LLM Fuzzy Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Fuzzy Match": {
+      "main": [
+        [
+          {
+            "node": "Parse Fuzzy Matches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Fuzzy Matches": {
+      "main": [
+        [
+          {
+            "node": "Confidence Above 85",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confidence Above 85": {
+      "main": [
+        [
+          {
+            "node": "Mark Fuzzy Matched",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Discrepancy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Fuzzy Matched": {
+      "main": [
+        [
+          {
+            "node": "Combine Classified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Classified": {
+      "main": [
+        [
+          {
+            "node": "Compile Reconciliation Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Discrepancy": {
+      "main": [
+        [
+          {
+            "node": "Combine Classified",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Compile Reconciliation Data": {
+      "main": [
+        [
+          {
+            "node": "Build Report Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Report Summary": {
+      "main": [
+        [
+          {
+            "node": "Format Report Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Report Document": {
+      "main": [
+        [
+          {
+            "node": "Create Report Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Report Doc": {
+      "main": [
+        [
+          {
+            "node": "Write Report Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Report Content": {
+      "main": [
+        [
+          {
+            "node": "Send Summary Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
